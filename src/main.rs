@@ -1,4 +1,6 @@
-use actix_web::{get, App, HttpResponse, HttpServer, Responder};
+use actix_web::{get, App, HttpResponse, HttpServer, Responder, web::Data};
+use api::user::{create_user};
+use repository::mongodb::MongoRepo;
 
 #[get("/")]
 async fn hello() -> impl Responder {
@@ -11,7 +13,12 @@ mod repository;
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
-    HttpServer::new(|| App::new().service(hello))
+    let db = MongoRepo::init().await;
+    let db_data = Data::new(db);
+    HttpServer::new(move || App::new()
+        .app_data(db_data.clone())
+        .service(hello)
+        .service(create_user))
         .bind(("localhost", 8080))?
         .run()
         .await
