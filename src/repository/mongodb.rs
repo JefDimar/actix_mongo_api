@@ -3,7 +3,11 @@ extern crate dotenv;
 use dotenv::dotenv;
 
 use crate::models::user::User;
-use mongodb::{bson::extjson::de::Error, results::InsertOneResult, Client, Collection};
+use mongodb::{
+    bson::{doc, extjson::de::Error, oid::ObjectId},
+    results::InsertOneResult,
+    Client, Collection,
+};
 
 pub struct MongoRepo {
     col: Collection<User>,
@@ -37,5 +41,17 @@ impl MongoRepo {
             .ok()
             .expect("error creating user");
         Ok(user)
+    }
+
+    pub async fn get_user(&self, id: &str) -> Result<User, Error> {
+        let obj_id = ObjectId::parse_str(id).unwrap();
+        let filter = doc! { "_id": obj_id };
+        let user_detail = self
+            .col
+            .find_one(filter, None)
+            .await
+            .ok()
+            .expect("error getting user detail");
+        Ok(user_detail.unwrap())
     }
 }
