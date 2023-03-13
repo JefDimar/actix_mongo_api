@@ -1,5 +1,5 @@
 use actix_web::{get, web::Data, App, HttpResponse, HttpServer, Responder};
-use api::user::{create_user, get_user};
+use api::user::{create_user, get_user, update_user};
 use repository::mongodb::MongoRepo;
 
 #[get("/")]
@@ -21,6 +21,7 @@ async fn main() -> std::io::Result<()> {
             .service(hello)
             .service(create_user)
             .service(get_user)
+            .service(update_user)
     })
     .bind(("localhost", 8080))?
     .run()
