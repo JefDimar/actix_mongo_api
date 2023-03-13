@@ -3,6 +3,7 @@ extern crate dotenv;
 use dotenv::dotenv;
 
 use crate::models::user::User;
+use futures::stream::TryStreamExt;
 use mongodb::{
     bson::{doc, extjson::de::Error, oid::ObjectId},
     results::{DeleteResult, InsertOneResult, UpdateResult},
@@ -86,5 +87,25 @@ impl MongoRepo {
             .ok()
             .expect("error deleting user");
         Ok(user_detail)
+    }
+
+    pub async fn get_all_users(&self) -> Result<Vec<User>, Error> {
+        let mut cursors = self
+            .col
+            .find(None, None)
+            .await
+            .ok()
+            .expect("erorr getting list of users");
+        let mut users: Vec<User> = Vec::new();
+        while let Some(user) = cursors
+            .try_next()
+            .await
+            .ok()
+            .expect("error mapping through cursors")
+        {
+            users.push(user)
+        }
+
+        Ok(users)
     }
 }
