@@ -1,6 +1,6 @@
 use crate::{models::user::User, repository::mongodb::MongoRepo};
 use actix_web::{
-    get, post, put,
+    get, post, put, delete,
     web::{Data, Json, Path},
     HttpResponse,
 };
@@ -64,5 +64,24 @@ pub async fn update_user(
             }
         }
         Err(err) => HttpResponse::InternalServerError().body(err.to_string()),
+    }
+}
+
+#[delete("/user/{id}")]
+pub async fn delete_user(db: Data<MongoRepo>, path: Path<String>) -> HttpResponse {
+    let id = path.into_inner();
+    if id.is_empty() {
+        return HttpResponse::BadRequest().body("invalid ID")
+    };
+    let result = db.delete_user(&id).await;
+    match result  {
+        Ok(res) => {
+            if res.deleted_count == 1 {
+                return HttpResponse::Ok().json("user succesfully deleted!");
+            } else {
+                return HttpResponse::NotFound().json("User with specified ID not found!");
+            }
+        },
+        Err(err) => HttpResponse::InternalServerError().body(err.to_string())
     }
 }
